@@ -1,7 +1,10 @@
 package com.client.app;
 
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.security.KeyStore;
+import java.security.cert.X509Certificate;
+import java.util.Enumeration;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
@@ -26,13 +29,18 @@ public class ClientAppApplication {
 	@Bean
 	public RestTemplate getRestTemplate() {
 	       RestTemplate restTemplate = new RestTemplate();
+		   if(11==1){
+			   return  restTemplate;
+		   }
+
+
 	        
 	       KeyStore keyStore;
 	       HttpComponentsClientHttpRequestFactory requestFactory = null;
 	        
 	       try {
-	           keyStore = KeyStore.getInstance("jks");
-	           ClassPathResource classPathResource = new ClassPathResource("client-app.jks");
+	           keyStore = KeyStore.getInstance("PKCS12");
+	           ClassPathResource classPathResource = new ClassPathResource("client-app.p12");
 	           InputStream inputStream = classPathResource.getInputStream();
 	           keyStore.load(inputStream, "client-app".toCharArray());
 	           SSLConnectionSocketFactory socketFactory = new SSLConnectionSocketFactory(new SSLContextBuilder()
@@ -45,9 +53,11 @@ public class ClientAppApplication {
 	                    .setMaxConnPerRoute(Integer.valueOf(5))
 	                    .build();
 
+
 	           requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
 	           requestFactory.setReadTimeout(Integer.valueOf(10000));
 	           requestFactory.setConnectTimeout(Integer.valueOf(10000));
+
 	            
 	           restTemplate.setRequestFactory(requestFactory);
 	       }
@@ -58,3 +68,4 @@ public class ClientAppApplication {
 	       return restTemplate;
 	}
 }
+

@@ -3,15 +3,16 @@ spring:
     name: server-app
 ---
 server:
-  port: 9002
+  port: 9007
   ssl:
+    key-store: classpath:server-app.p12
+    key-store-password: server-app
+    keystore-path: server-app.p12
+    key-alias: server-app
+    key-store-type: PKCS12
+    key-store-provider: SUN
+    trust-store: classpath:server-app.p12
+    trust-store-password: server-app
+    trust-store-type: PKCS12
     enabled: true
     client-auth: need
-    key-store: classpath:server-app.jks
-    key-store-password: server-app
-    key-alias: server-app
-    key-store-type: JKS
-    key-store-provider: SUN
-    trust-store: classpath:server-app.jks
-    trust-store-password: server-app
-    trust-store-type: JKS
