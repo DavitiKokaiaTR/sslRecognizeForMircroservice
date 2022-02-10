@@ -63,7 +63,7 @@ public class ClientAppController {
 
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer FoYLpG7sSbPQrioIcDfxdlvmFv7qTNaG");
+            headers.set("Authorization", "Bearer ");
             headers.set("MicroServiceUniqueID", "isheetversiondato.1641471995826");
 
             HttpEntity<String> entity = new HttpEntity<>("body", headers);
