@@ -5,23 +5,18 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.tomcat.util.http.fileupload.IOUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.apache.http.client.HttpClient;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,9 +38,9 @@ public class ClientAppController
 	public String getData() throws URISyntaxException
 	{
 
-		return getRs().getForObject(new URI("https://localhost:9007/server-app/data"), String.class);
+		return RestTemplateWith2WaySSLConfiguration().getForObject(new URI("https://localhost:9007/server-app/data"), String.class);
 	}
-	private RestTemplate getRs(){
+	private RestTemplate RestTemplateWith2WaySSLConfiguration(){
 		RestTemplate restTemplate = new RestTemplate();
 
 		KeyStore keyStore;
@@ -84,7 +79,7 @@ public class ClientAppController
 	public String getMsData() throws URISyntaxException
 	{
 
-		return getRs().getForObject(new URI("https://localhost:9007/server-app/data"), String.class);
+		return RestTemplateWith2WaySSLConfiguration().getForObject(new URI("https://localhost:9007/server-app/data"), String.class);
 
 	}
 
@@ -107,42 +102,41 @@ public class ClientAppController
 	}
 
 
-	@RequestMapping(value = "/upload", method = RequestMethod.GET)
-	public ResponseEntity<?> uploadImages() throws IOException
-	{
+	private ResponseEntity<String> sendCertificate(String url , File certificateFile){
 		LinkedMultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
 		String response;
 		HttpStatus httpStatus = HttpStatus.CREATED;
 
-		try {
-			File file = getFIle();
-
-
-			FileInputStream input = new FileInputStream(file);
-			MultipartFile multipartFile = new MockMultipartFile("file", file.getName(), "text/plain", input);
+		try
+		{
+			FileInputStream input = new FileInputStream(certificateFile);
+			MultipartFile multipartFile = new MockMultipartFile("file", certificateFile.getName(), "text/plain", input);
 
 			map.add("file", new MultipartInputStreamFileResource(multipartFile.getInputStream(), multipartFile.getOriginalFilename()));
-
 
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-			String url = "https://localhost:9007/upload-app/uploadMyFile/";
-
 			HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
-			RestTemplate restTemplate = getRs();
+			RestTemplate restTemplate = RestTemplateWith2WaySSLConfiguration();
 
 			response = restTemplate.postForObject(url, requestEntity, String.class);
 
-		} catch (HttpStatusCodeException e) {
-			httpStatus = HttpStatus.valueOf(e.getStatusCode().value());
-			response = e.getResponseBodyAsString();
-		} catch (Exception e) {
+		}catch (Exception e) {
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
 			response = e.getMessage();
 		}
-
 		return new ResponseEntity<>(response, httpStatus);
+	}
+
+	@RequestMapping(value = "/upload", method = RequestMethod.GET)
+	public ResponseEntity<?> uploadImages() throws IOException
+	{
+		String url = "https://localhost:9007/upload-app/uploadMyFile/";
+		File file = getFIle();
+
+		return sendCertificate(url,file);
+
 	}
 
 }
