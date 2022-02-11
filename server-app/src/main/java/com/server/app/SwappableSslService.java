@@ -1,5 +1,6 @@
 package com.server.app;
 
+import nl.altindag.ssl.util.KeyManagerUtils;
 import nl.altindag.ssl.util.SSLSessionUtils;
 import nl.altindag.ssl.util.TrustManagerUtils;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,7 @@ public class SwappableSslService {
 	}
 
 	public void updateSslMaterials(X509ExtendedKeyManager keyManager, X509ExtendedTrustManager trustManager) {
-		//KeyManagerUtils.swapKeyManager(swappableKeyManager, keyManager);
+		KeyManagerUtils.swapKeyManager(swappableKeyManager, keyManager);
 		TrustManagerUtils.swapTrustManager(swappableTrustManager, trustManager);
 		SSLSessionUtils.invalidateCaches(sslSessionContext);
 	}

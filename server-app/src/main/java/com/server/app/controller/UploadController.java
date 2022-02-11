@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509ExtendedTrustManager;
 import java.io.*;
@@ -45,7 +47,6 @@ public class UploadController
 		CertificateFactory certificateFactory = CertificateFactory
 				.getInstance("X.509");
 
-
 		FileInputStream in = new FileInputStream(file);
 
 		Certificate certificate = certificateFactory
@@ -58,32 +59,27 @@ public class UploadController
 
 	private final SwappableSslService sslService;
 
-	private void addCertificate(File file2){
+	private void addCertificate(File file2, String certificatePath,String password,String certificateAlias){
 		try
 		{
 			KeyStore keystore = KeyStore.getInstance("PKCS12");
-			ClassPathResource classPathResource = new ClassPathResource("server-app.p12");
+			ClassPathResource classPathResource = new ClassPathResource(certificatePath);
 			InputStream inputStream = classPathResource.getInputStream();
-			keystore.load(inputStream, "server-app".toCharArray());
+			keystore.load(inputStream, password.toCharArray());
 
 			Certificate trustedCert = getCertificate(file2);
-			keystore.setCertificateEntry("client-app", trustedCert);
+			keystore.setCertificateEntry(certificateAlias, trustedCert);
 
-			//TODO save in resource directory
-			String certificatePath = "server-app.p12";
 			URL res = getClass().getClassLoader().getResource(certificatePath);
 			File file = Paths.get(res.toURI()).toFile();
 			certificatePath = file.getAbsolutePath();
 
-			System.out.println("path: " + certificatePath);
 
-/*
 			try (FileOutputStream fos = new FileOutputStream(certificatePath)) {
-				keystore.store(fos, "server-app".toCharArray());
+				keystore.store(fos, password.toCharArray());
 			}
 
- */
-			X509ExtendedKeyManager keyManager = KeyManagerUtils.createKeyManager(keystore,"server-app".toCharArray());
+			X509ExtendedKeyManager keyManager = KeyManagerUtils.createKeyManager(keystore,password.toCharArray());
 			X509ExtendedTrustManager trustManager = TrustManagerUtils.createTrustManager(keystore);
 
 			sslService.updateSslMaterials(keyManager,trustManager);
@@ -94,7 +90,6 @@ public class UploadController
 		}
 	}
 
-
 	private File convertMultiPartToFile(MultipartFile file ) throws IOException
 	{
 		File convFile = new File( file.getOriginalFilename() );
@@ -103,43 +98,17 @@ public class UploadController
 		fos.close();
 		return convFile;
 	}
-	private void getDataFromAlias()
-	{
-		try
-		{
-			KeyStore keystore = KeyStore.getInstance("PKCS12");
-			ClassPathResource classPathResource = new ClassPathResource("server-app.p12");
-			InputStream inputStream = classPathResource.getInputStream();
-			keystore.load(inputStream, "server-app".toCharArray());
 
-			Enumeration<String> aliases = keystore.aliases();
-			while (aliases.hasMoreElements())
-			{
-				String alias = aliases.nextElement();
-				if (keystore.getCertificate(alias).getType().equals("X.509"))
-				{
-					System.out.println(alias + " starts " + ((X509Certificate) keystore.getCertificate(alias)).getNotBefore());
-					System.out.println(alias + " expires " + ((X509Certificate) keystore.getCertificate(alias)).getNotAfter());
-					System.out.println(alias + " aboutInfo " + ((X509Certificate) keystore.getCertificate(alias)).getSubjectDN());
-
-				}
-			}
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
 
 	@RequestMapping(value = "/uploadMyFile", method = RequestMethod.POST)
 	@ResponseBody
 	public String handleFileUpload(MultipartHttpServletRequest request)
 			throws Exception {
-		getDataFromAlias();
+
 		Iterator<String> itrator = request.getFileNames();
 		MultipartFile multiFile = request.getFile(itrator.next());
 		try {
-			// just to show that we have actually received the file
+
 			System.out.println("File Length:" + multiFile.getBytes().length);
 			System.out.println("File Type:" + multiFile.getContentType());
 			String fileName=multiFile.getOriginalFilename();
@@ -147,11 +116,14 @@ public class UploadController
 			String path=request.getServletContext().getRealPath("/");
 
 			File fl = convertMultiPartToFile(multiFile);
-			addCertificate(fl);
+
+			String certificatePath = "server-app.p12";
+			String password = "server-app";
+			String certificateAlias = "client-app";
+			addCertificate(fl,certificatePath,password,certificateAlias);
 
 
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			throw new Exception("Error while loading the file");
 		}
@@ -165,7 +137,6 @@ public class UploadController
 		try {
 			builder.append(mapper.writeValueAsString(data));
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return builder.toString();

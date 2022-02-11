@@ -50,109 +50,14 @@ public class ClientAppController {
     @RequestMapping(value = "/ms-data", method = RequestMethod.GET)
     public String getMsData() {
 
-        getDataFromAlias();
-
-
         System.out.println("Got inside client-app-server-data method");
         try {
             System.out.println("MS Endpoint name : [" + "https://localhost:9007/server-app/data" + "]");
-           if( 1   ==1){
-
-               return restTemplate.getForObject(new URI("https://localhost:9007/server-app/data"), String.class);
-           }
-
-            RestTemplate restTemplate = new RestTemplate();
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer FoYLpG7sSbPQrioIcDfxdlvmFv7qTNaG");
-            headers.set("MicroServiceUniqueID", "isheetversiondato.1641471995826");
-
-            HttpEntity<String> entity = new HttpEntity<>("body", headers);
-
-
-            ResponseEntity<String> response = restTemplate.exchange(
-                    new URI("https://use2devp6125.hqdev.highq.com/isheetversiondato/data"), HttpMethod.GET, entity, String.class);
-
-            return response.getBody();
-
-
+            return restTemplate.getForObject(new URI("https://localhost:9007/server-app/data"), String.class);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
         return "Exception occurred.. so, returning default data";
     }
 
-
-    private  Certificate getCertificate(String certificatePath)
-            throws Exception {
-        CertificateFactory certificateFactory = CertificateFactory
-                .getInstance("X.509");
-        URL res = getClass().getClassLoader().getResource(certificatePath);
-        File file = Paths.get(res.toURI()).toFile();
-        certificatePath = file.getAbsolutePath();
-
-
-        FileInputStream in = new FileInputStream(certificatePath);
-
-        Certificate certificate = certificateFactory
-                .generateCertificate(in);
-        in.close();
-
-        return certificate;
-    }
-
-    private void addCertificate(){
-        try
-        {
-            KeyStore keystore = KeyStore.getInstance("PKCS12");
-            ClassPathResource classPathResource = new ClassPathResource("client-app.p12");
-            InputStream inputStream = classPathResource.getInputStream();
-            keystore.load(inputStream, "client-app".toCharArray());
-
-            Certificate trustedCert = getCertificate("server_app12.cer");
-
-            keystore.setCertificateEntry("server-app123", trustedCert);
-
-            //TODO save in resource directory
-            String certificatePath = "client-app.p12";
-            URL res = getClass().getClassLoader().getResource(certificatePath);
-            File file = Paths.get(res.toURI()).toFile();
-            certificatePath = file.getAbsolutePath();
-
-            System.out.println("path: " + certificatePath);
-
-
-            try (FileOutputStream fos = new FileOutputStream(certificatePath)) {
-                keystore.store(fos, "client-app".toCharArray());
-            }
-
-
-
-        }catch (Exception e){
-            e.printStackTrace();
-
-        }
-    }
-
-    private void getDataFromAlias(){
-        try {
-            KeyStore keystore = KeyStore.getInstance("PKCS12");
-            ClassPathResource classPathResource = new ClassPathResource("client-app.p12");
-            InputStream inputStream = classPathResource.getInputStream();
-            keystore.load(inputStream, "client-app".toCharArray());
-
-            Enumeration<String> aliases = keystore.aliases();
-            while(aliases.hasMoreElements()){
-                String alias = aliases.nextElement();
-                if(keystore.getCertificate(alias).getType().equals("X.509")){
-                    System.out.println(alias + " starts " + ((X509Certificate) keystore.getCertificate(alias)).getNotBefore());
-                    System.out.println(alias + " expires " + ((X509Certificate) keystore.getCertificate(alias)).getNotAfter());
-                    System.out.println(alias + " aboutInfo " + ((X509Certificate) keystore.getCertificate(alias)).getSubjectDN());
-                    Certificate[] chain = keystore.getCertificateChain("client-app");
-
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }

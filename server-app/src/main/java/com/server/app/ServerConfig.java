@@ -21,9 +21,10 @@ public class ServerConfig
         JettyServletWebServerFactory factory = new JettyServletWebServerFactory();
 
         JettyServerCustomizer jettyServerCustomizer = server -> {
-            ServerConnector serverConnector = new ServerConnector(server, sslContextFactory);
+            ServerConnector serverConnector = new ServerConnector(server,sslContextFactory);
             serverConnector.setPort(9007);
             server.setConnectors(new Connector[]{serverConnector});
+
         };
         factory.setServerCustomizers(Collections.singletonList(jettyServerCustomizer));
 
